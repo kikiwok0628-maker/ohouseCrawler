@@ -65,9 +65,9 @@ async function fetchSearchCookiesAndClose(keyword, browser) {
     "(KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
   );
 
-  await page.goto("https://store.ohou.se/", { waitUntil: "networkidle2" });
+  await page.goto("https://store.ohou.se/", { waitUntil: "load", timeout: 60000 });
   const inputSel = "input[placeholder='쇼핑 검색'].css-1pneado.e1rynmtb2";
-  await page.waitForSelector(inputSel);
+  await page.waitForSelector(inputSel, { timeout: 10000 });
   await page.type(inputSel, keyword);
   await page.keyboard.press("Enter");
   await page.waitForFunction(() => {
@@ -76,7 +76,7 @@ async function fetchSearchCookiesAndClose(keyword, browser) {
         ".production-feed__item-wrap.col-6.col-md-4.col-lg-3"
       ).length > 0
     );
-  });
+  }, { timeout: 10000 });
   // await sleep(300);
   // 아래로 스크롤 한 번 내려서 feed.json 요청 트리거
   await page.evaluate(() => window.scrollBy(0, window.innerHeight));
