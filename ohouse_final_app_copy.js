@@ -195,16 +195,22 @@ app.post("/ohouse_trigger", async (req, res) => {
         // 검색 및 스크롤하여 쿠키 얻기
         const cookieHeader = await safeFetchCookies(kw, browser);
         // 순위 조회
-        return await getRanksViaFeedApi(kw, mids, cookieHeader);
+        const rankMap = await getRanksViaFeedApi(kw, mids, cookieHeader);
+        return { keyword: kw, rankMap };
       })
     );
 
     const results = await Promise.all(tasks);
     await browser.close();
 
-    // 원래 순서대로 ranks 배열 만들기
-    const merged = Object.assign({}, ...results);
-    const ranks = rows.map(([kw, mid]) => [merged[mid] || ""]);
+    // 키워드+mid 조합으로 merged 생성 (같은 mid라도 키워드별로 다른 순위 유지)
+    const merged = {};
+    for (const { keyword, rankMap } of results) {
+      for (const [mid, rank] of Object.entries(rankMap)) {
+        merged[`${keyword}|${mid}`] = rank;
+      }
+    }
+    const ranks = rows.map(([kw, mid]) => [merged[`${kw}|${mid}`] || ""]);
 
     // 구글 시트에 업데이트
     await sendDataToSheet(sheets, ranks, sheetId, sheetName, spreadsheetId);
